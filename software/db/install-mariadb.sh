@@ -1,0 +1,1 @@
+helm install --name mariadb stable/mariadb --set rootUser.password=root123456,db.user=spring,db.password=spring1234,db.name=spring,master.persistence.existingClaim=mariadb-claim

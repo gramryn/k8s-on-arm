@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-conf
+  namespace: kube-system
+data:
+  traefik.toml: |
+    defaultEntryPoints = ["http", "https"]
+    debug = true
+    logLevel = "INFO"
+    InsecureSkipVerify = true
+
+    [entryPoints]
+      [entryPoints.http]
+      address = ":80"
+      compress = true
+
+      [entryPoints.https]
+      address = ":443"
+        [entryPoints.https.tls]
+
+    [kubernetes]
+
+    [accessLog]
+
+    [metrics]
+      [metrics.prometheus]
+      buckets=[0.1,0.3,1.2,5.0]
+      entryPoint = "traefik"
+
+    [ping]
+    entryPoint = "http"
+
+    [acme]
+      email="ageofblue@gmail.com"
+      storage="/etc/traefik/acme.json"
+      entryPoint="https"
+      acmeLogging=true
+      onDemand=true
+      onHostRule=true
+      dnsProvider="cloudflare"
+      [acme.dnsChallenge]
+        provider = "cloudflare"
+        delayBeforeCheck = 0

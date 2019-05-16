@@ -1,0 +1,82 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: grafana-storage-claim
+  namespace: kube-system
+  annotations:
+    volume.beta.kubernetes.io/storage-class: "nfs-client"
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1G
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: kube-system
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        k8s-app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /var/lib/grafana
+          name: grafana-storage
+        env:
+        - name: GF_SERVER_HTTP_PORT
+          value: "3000"
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          value: "helloworld"
+        - name: GF_INSTALL_PLUGINS
+          value: "grafana-kubernetes-app"
+      volumes:
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: grafana-storage-claim
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: grafana-service
+  namespace: kube-system
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port:   '3000'
+spec:
+  selector:
+    k8s-app: grafana
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/rule-type: "PathPrefixStrip"
+    external-dns.alpha.kubernetes.io/target: home.cluster.camp
+  name: grafana-dashboard
+  namespace: kube-system
+spec:
+  rules:
+  - host: grafana.cluster.camp
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: grafana-service
+          servicePort: 3000

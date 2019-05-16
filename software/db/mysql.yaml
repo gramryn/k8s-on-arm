@@ -1,0 +1,9 @@
+image: "mysql"
+imageTag: "8.0.15"
+mysqlUser: spring
+mysqlPassword: spring1234
+mysqlRootPassword: root123456
+mysqlDatabase: spring
+persistence:
+  enabled: true
+  existingClaim: mysql-claim

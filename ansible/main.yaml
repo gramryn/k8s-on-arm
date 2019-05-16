@@ -1,0 +1,265 @@
+---
+- name: Setup NanoPC T4 For Kubernetes
+  hosts: all
+  #become: true
+  #become_user: root
+  gather_facts: false
+
+  vars:
+    #New user to be created
+    locales_generated:
+      - en_US.UTF-8
+      - ko_KR.UTF-8
+    default_locale: ko_KR.UTF-8
+    default_language: ko_KR
+    timezone: Asia/Seoul
+    new_user: k8s
+    kubernetes_version: "1.14.1-00"
+    docker_version: "18.09.6~ce~3-0~debian"
+  pre_tasks:
+    - name: Install python2 for Ansible
+      raw: bash -c "test -e /usr/bin/python || (apt -qqy update && apt install -qqy python2.7 python-minimal python-setuptools)"
+      register: output
+      changed_when: output.stdout != ""
+
+    - name: Gathering Facts
+      setup:
+
+  tasks:
+    - name: Install additional packages
+      apt:
+        name: "{{ packages }}"
+        update_cache: yes
+      vars:
+        packages:
+          - sudo
+          - file
+          - dbus
+          - bc
+          - bash-completion
+          - hdparm
+          - ack
+          - telnet
+          - iotop
+          - sysstat
+          - nfs-common
+          - git
+          - less
+          - vim
+          - build-essential
+          - iptables
+          - ipset
+          - pciutils
+          - lshw
+          - iperf3
+          - net-tools
+          - jq
+          - language-pack-ko
+          - language-pack-ko-base
+          
+    - name: select locales to be generated
+      locale_gen:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ locales_generated }}"
+      notify: reconfigure locales
+
+    - name: Configuration Default locale
+      copy:
+        dest: "/etc/default/locale"
+        content: |
+          LANG={{ default_locale }}
+          LANGUAGE={{ default_language }}
+          LC_ALL={{ default_locale }}
+      notify: reconfigure locales
+
+    - name: Setting localtime
+      file: src=/usr/share/zoneinfo/{{ timezone }} dest=/etc/localtime state=link
+      
+    - name: Setting Time Zone
+      timezone: name={{ timezone }}
+      notify: update tzdata
+
+    - name: Stop and disable unused services
+      systemd:
+          name: "{{ item }}"
+          state: stopped
+          enabled: no
+      with_items:
+          - NetworkManager
+          # - dhcpd
+          # - armbian-zram-config.service
+      retries: 3
+      delay: 2
+      ignore_errors: yes
+
+    - name: Disable global IPv6 with sysctl
+      sysctl:
+        name: "{{ item }}"
+        value: 1
+        state: present
+      with_items:
+        - net.ipv6.conf.all.disable_ipv6
+        - net.ipv6.conf.default.disable_ipv6
+      retries: 3
+      delay: 2
+      ignore_errors: yes
+
+    - name: Disable IPv6 for interfaces with sysctl
+      sysctl:
+        name: net.ipv6.conf.{{item}}.disable_ipv6
+        value: 1
+        state: present
+      with_items:
+        - "{{ ansible_interfaces }}"
+      ignore_errors: True
+
+    - name: Fix MAC creation error on veth interfaces
+      copy:
+        dest: "/etc/systemd/network/99-default.link"
+        content: |
+          # /etc/systemd/network/99-default.link
+          # https://github.com/systemd/systemd/issues/3374
+          [Match]
+          Path=/devices/virtual/net/*
+          [Link]
+          NamePolicy=kernel database onboard slot path
+          MACAddressPolicy=none
+        mode: 0644
+
+    - name: Make sure we have a "wheel" group
+      group:
+        name: wheel
+        state: present
+
+    - name: Allow "wheel" group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: "^%wheel"
+        line: "%wheel ALL=(ALL) NOPASSWD: ALL"
+        validate: "visudo -cf %s"
+
+    - name: Create user and add to sudoers
+      user:
+        name: "{{ new_user }}"
+        groups: wheel
+        append: yes
+        state: present
+        createhome: yes
+    - name: Set up authorized keys for the user
+      authorized_key:
+        user: "{{ new_user }}"
+        key: "{{item}}"
+      with_file:
+        - ~/.ssh/id_rsa.pub
+
+    - name: Disable swap
+      mount:
+        name: swap
+        fstype: swap
+        state: absent
+    - name: Disable swap
+      command: swapoff -a
+      when: ansible_swaptotal_mb > 0
+
+    - name: Install Docker prerequisites
+      apt:
+        name: "{{packages}}"
+        update_cache: yes
+      vars:
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+
+    - name: Add Docker GPG key
+      apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: "deb [arch=arm64] https://download.docker.com/linux/ubuntu {{ansible_distribution_release}} stable"
+
+    - name: Install Docker
+      apt:
+        name: "{{packages}}"
+        update_cache: yes
+      vars:
+        packages:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+
+    - name: Configuration Docker Daemon
+      copy:
+        dest: "/etc/docker/daemon.json"
+        content: |
+          {
+            "exec-opts": ["native.cgroupdriver=systemd"],
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "100m"
+            },
+            "storage-driver": "overlay2"
+          }
+     
+    - name: Add Kubernetes GPG key
+      apt_key: url=https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+    - name: Add Kubernetes APT repository
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+
+    - name: Install Kubernetes
+      apt:
+        name: "{{packages}}"
+        update_cache: yes
+        state: present
+      vars:
+        packages:
+          - kubelet={{kubernetes_version}}
+          - kubeadm={{kubernetes_version}}
+          - kubectl={{kubernetes_version}}
+
+    - name: Add user to Docker group
+      command: usermod -aG docker {{ new_user }}
+      
+    - name: Reconfigure locale
+      command: dpkg-reconfigure locales --frontend noninteractive
+
+    - name: Fix ping permission
+      file:
+        path: "{{item}}"
+        mode: a+xs
+      with_fileglob:
+        - "/bin/ping*"
+
+    - name: Cleanup logs
+      file:
+        state: absent
+        path: "{{item}}"
+      with_items:
+        - /var/log/*
+
+    - name: More log cleanup
+      command: "{{item}}"
+      with_items:
+        - "journalctl --flush --rotate"
+        - "journalctl --vacuum-time=1seconds"
+
+    - name: Mount /var/log as a ramdrive to avoid wear to disk
+      mount:
+        backup: yes
+        path: /var/log
+        src: tmpfs
+        fstype: tmpfs
+        opts: defaults,size=200m,noatime,nodev,nosuid,mode=1777
+        state: present
+  
+  handlers:
+    - name: update tzdata
+      command: /usr/sbin/dpkg-reconfigure -f noninteractive tzdata
+
+    - name: reconfigure locales
+      command: /usr/sbin/dpkg-reconfigure -f noninteractive locales
