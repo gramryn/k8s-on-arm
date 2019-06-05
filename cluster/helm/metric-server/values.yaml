@@ -1,0 +1,7 @@
+image:
+  repository: gcr.io/google_containers/metrics-server-arm64
+  tag: v0.3.2
+args:
+- --logtostderr
+- --kubelet-insecure-tls
+- --kubelet-preferred-address-types=InternalIP

@@ -1,3 +1,4 @@
+#!/bin/bash
 kubeadm config images pull
 # for flannel
 kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans=k8s.cluster.camp,api.k8s.cluster.camp
