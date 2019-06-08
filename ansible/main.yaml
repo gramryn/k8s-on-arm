@@ -13,15 +13,9 @@
     default_locale: ko_KR.UTF-8
     default_language: ko_KR
     timezone: Asia/Seoul
-    new_user: k8s
-    kubernetes_version: "1.14.1-00"
-    docker_version: "18.09.6~ce~3-0~debian"
+    ansible_python_interpreter: /usr/bin/python3
+    kubernetes_version: "1.14.2-00"
   pre_tasks:
-    - name: Install python2 for Ansible
-      raw: bash -c "test -e /usr/bin/python || (apt -qqy update && apt install -qqy python2.7 python-minimal python-setuptools)"
-      register: output
-      changed_when: output.stdout != ""
-
     - name: Gathering Facts
       setup:
 
@@ -32,11 +26,8 @@
         update_cache: yes
       vars:
         packages:
-          - sudo
-          - file
           - dbus
           - bc
-          - bash-completion
           - hdparm
           - ack
           - telnet
@@ -57,28 +48,28 @@
           - language-pack-ko
           - language-pack-ko-base
           
-    - name: select locales to be generated
-      locale_gen:
-        name: "{{ item }}"
-        state: present
-      loop: "{{ locales_generated }}"
-      notify: reconfigure locales
+    # - name: select locales to be generated
+    #   locale_gen:
+    #     name: "{{ item }}"
+    #     state: present
+    #   loop: "{{ locales_generated }}"
+    #   notify: reconfigure locales
 
-    - name: Configuration Default locale
-      copy:
-        dest: "/etc/default/locale"
-        content: |
-          LANG={{ default_locale }}
-          LANGUAGE={{ default_language }}
-          LC_ALL={{ default_locale }}
-      notify: reconfigure locales
+    # - name: Configuration Default locale
+    #   copy:
+    #     dest: "/etc/default/locale"
+    #     content: |
+    #       LANG={{ default_locale }}
+    #       LANGUAGE={{ default_language }}
+    #       LC_ALL={{ default_locale }}
+    #   notify: reconfigure locales
 
-    - name: Setting localtime
-      file: src=/usr/share/zoneinfo/{{ timezone }} dest=/etc/localtime state=link
+    # - name: Setting localtime
+    #   file: src=/usr/share/zoneinfo/{{ timezone }} dest=/etc/localtime state=link
       
-    - name: Setting Time Zone
-      timezone: name={{ timezone }}
-      notify: update tzdata
+    # - name: Setting Time Zone
+    #   timezone: name={{ timezone }}
+    #   notify: update tzdata
 
     - name: Stop and disable unused services
       systemd:
@@ -86,9 +77,8 @@
           state: stopped
           enabled: no
       with_items:
-          - NetworkManager
-          # - dhcpd
-          # - armbian-zram-config.service
+          - dhcpd
+          - armbian-zram-config.service
       retries: 3
       delay: 2
       ignore_errors: yes
@@ -127,40 +117,11 @@
           MACAddressPolicy=none
         mode: 0644
 
-    - name: Make sure we have a "wheel" group
-      group:
-        name: wheel
-        state: present
-
-    - name: Allow "wheel" group to have passwordless sudo
-      lineinfile:
-        dest: /etc/sudoers
-        state: present
-        regexp: "^%wheel"
-        line: "%wheel ALL=(ALL) NOPASSWD: ALL"
-        validate: "visudo -cf %s"
-
-    - name: Create user and add to sudoers
-      user:
-        name: "{{ new_user }}"
-        groups: wheel
-        append: yes
-        state: present
-        createhome: yes
-    - name: Set up authorized keys for the user
-      authorized_key:
-        user: "{{ new_user }}"
-        key: "{{item}}"
-      with_file:
-        - ~/.ssh/id_rsa.pub
-
     - name: Disable swap
       mount:
         name: swap
         fstype: swap
         state: absent
-    - name: Disable swap
-      command: swapoff -a
       when: ansible_swaptotal_mb > 0
 
     - name: Install Docker prerequisites
@@ -189,7 +150,6 @@
         packages:
           - docker-ce
           - docker-ce-cli
-          - containerd.io
 
     - name: Configuration Docker Daemon
       copy:
@@ -222,18 +182,8 @@
           - kubeadm={{kubernetes_version}}
           - kubectl={{kubernetes_version}}
 
-    - name: Add user to Docker group
-      command: usermod -aG docker {{ new_user }}
-      
     - name: Reconfigure locale
       command: dpkg-reconfigure locales --frontend noninteractive
-
-    - name: Fix ping permission
-      file:
-        path: "{{item}}"
-        mode: a+xs
-      with_fileglob:
-        - "/bin/ping*"
 
     - name: Cleanup logs
       file:

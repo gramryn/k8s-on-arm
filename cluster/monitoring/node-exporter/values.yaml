@@ -1,0 +1,8 @@
+image:
+  repository: prom/node-exporter-linux-arm64
+extraArgs: 
+  - --collector.textfile.directory=/var/lib/node_exporter
+extraHostVolumeMounts: 
+  - name: file-collector
+    hostPath: /var/lib/node_exporter
+    mountPath: /var/lib/node_exporter

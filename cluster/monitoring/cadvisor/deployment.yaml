@@ -19,7 +19,7 @@ spec:
         effect: NoSchedule
       containers:
       - name: cadvisor
-        image: linuxkit/cadvisor:v0.7-arm64 
+        image: linuxkit/cadvisor:v0.7-arm64
         volumeMounts:
         - name: rootfs
           mountPath: /rootfs
