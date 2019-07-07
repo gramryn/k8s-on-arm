@@ -1,0 +1,1 @@
+aws route53 create-hosted-zone --name "cluster.camp." --caller-reference "external-dns-cluster.camp-$(date +%s)"

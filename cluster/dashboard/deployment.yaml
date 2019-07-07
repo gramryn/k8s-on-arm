@@ -164,7 +164,7 @@ kind: Ingress
 metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
-    traefik.ingress.kubernetes.io/rule-type: "PathPrefixStrip"
+    traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip
     external-dns.alpha.kubernetes.io/target: home.cluster.camp
   name: kubernetes-dashboard
   namespace: kube-system

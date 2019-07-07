@@ -14,39 +14,39 @@
     default_language: ko_KR
     timezone: Asia/Seoul
     ansible_python_interpreter: /usr/bin/python3
-    kubernetes_version: "1.14.2-00"
+    kubernetes_version: "1.15.0-00"
   pre_tasks:
     - name: Gathering Facts
       setup:
 
-  tasks:
-    - name: Install additional packages
-      apt:
-        name: "{{ packages }}"
-        update_cache: yes
-      vars:
-        packages:
-          - dbus
-          - bc
-          - hdparm
-          - ack
-          - telnet
-          - iotop
-          - sysstat
-          - nfs-common
-          - git
-          - less
-          - vim
-          - build-essential
-          - iptables
-          - ipset
-          - pciutils
-          - lshw
-          - iperf3
-          - net-tools
-          - jq
-          - language-pack-ko
-          - language-pack-ko-base
+  # tasks:
+  #   - name: Install additional packages
+  #     apt:
+  #       name: "{{ packages }}"
+  #       update_cache: yes
+  #     vars:
+  #       packages:
+  #         - dbus
+  #         - bc
+  #         - hdparm
+  #         - ack
+  #         - telnet
+  #         - iotop
+  #         - sysstat
+  #         - nfs-common
+  #         - git
+  #         - less
+  #         - vim
+  #         - build-essential
+  #         - iptables
+  #         - ipset
+  #         - pciutils
+  #         - lshw
+  #         - iperf3
+  #         - net-tools
+  #         - jq
+  #         - language-pack-ko
+  #         - language-pack-ko-base
           
     # - name: select locales to be generated
     #   locale_gen:
@@ -77,7 +77,6 @@
           state: stopped
           enabled: no
       with_items:
-          - dhcpd
           - armbian-zram-config.service
       retries: 3
       delay: 2
@@ -182,8 +181,8 @@
           - kubeadm={{kubernetes_version}}
           - kubectl={{kubernetes_version}}
 
-    - name: Reconfigure locale
-      command: dpkg-reconfigure locales --frontend noninteractive
+  #   - name: Reconfigure locale
+  #     command: dpkg-reconfigure locales --frontend noninteractive
 
     - name: Cleanup logs
       file:
@@ -207,9 +206,9 @@
         opts: defaults,size=200m,noatime,nodev,nosuid,mode=1777
         state: present
   
-  handlers:
-    - name: update tzdata
-      command: /usr/sbin/dpkg-reconfigure -f noninteractive tzdata
+  # handlers:
+  #   - name: update tzdata
+  #     command: /usr/sbin/dpkg-reconfigure -f noninteractive tzdata
 
-    - name: reconfigure locales
-      command: /usr/sbin/dpkg-reconfigure -f noninteractive locales
+  #   - name: reconfigure locales
+  #     command: /usr/sbin/dpkg-reconfigure -f noninteractive locales

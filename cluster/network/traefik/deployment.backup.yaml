@@ -44,12 +44,12 @@ subjects:
 kind: Service
 apiVersion: v1
 metadata:
-  name: traefik-ingress-service
+  name: traefik
   namespace: kube-system
   labels:
     k8s-app: traefik-ingress-lb
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: home.cluster.camp
+    external-dns.alpha.kubernetes.io/target: home.proxy.camp
 spec:
   selector:
     k8s-app: traefik-ingress-lb
@@ -72,14 +72,13 @@ apiVersion: v1
 metadata:
   name: acme
   namespace: kube-system
-  annotations:
-    volume.beta.kubernetes.io/storage-class: "nfs-client"
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
+  storageClassName: nvme
   resources:
     requests:
-      storage: 10Mi
+      storage: 100Mi
 ---
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -89,7 +88,7 @@ metadata:
   labels:
     k8s-app: traefik-ingress-lb
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       k8s-app: traefik-ingress-lb
@@ -119,12 +118,10 @@ spec:
         - mountPath: /config
           name: config
         - mountPath: "/etc/traefik"
-          name: "acme"
+          name: acme
         ports:
          - name: http
            containerPort: 80
-         - name: https
-           containerPort: 443
          - name: admin
            containerPort: 8080
         args:

@@ -16,7 +16,7 @@ data:
     - name: default
       protocol: layer2
       addresses:
-      - 192.168.1.0/24
+      - 192.168.1.5-192.168.1.250
 ---
 apiVersion: extensions/v1beta1
 kind: PodSecurityPolicy
@@ -63,7 +63,6 @@ metadata:
   name: speaker
   labels:
     app: metallb
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -112,7 +111,6 @@ rules:
   resources: ["events"]
   verbs: ["create"]
 ---
-
 ## Role bindings
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

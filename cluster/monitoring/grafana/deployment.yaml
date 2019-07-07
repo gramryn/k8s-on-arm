@@ -9,7 +9,7 @@ spec:
   storageClassName: nvme
   resources:
     requests:
-      storage: 1Gi
+      storage: 10Gi
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -67,7 +67,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/rule-type: "PathPrefixStrip"
-    external-dns.alpha.kubernetes.io/target: home.cluster.camp
+    external-dns.alpha.kubernetes.io/target: home.proxy.camp
   name: grafana-dashboard
   namespace: kube-system
 spec:

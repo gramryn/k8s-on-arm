@@ -1,0 +1,1 @@
+* * * * * /var/lib/node_exporter/cpu-temp.sh

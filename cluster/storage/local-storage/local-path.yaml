@@ -35,9 +35,9 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: local-path-provisioner-service-account
-  namespace: kube-system
+  namespace: local-path-storage
 ---
-apiVersion: apps/v1
+apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   name: local-path-provisioner
@@ -56,7 +56,7 @@ spec:
       containers:
       - name: local-path-provisioner
         image: akhenakh/local-path-provisioner:arm64-v0.0.9
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         command:
         - local-path-provisioner
         - --debug
@@ -95,7 +95,7 @@ data:
                 "nodePathMap":[
                 {
                         "node":"DEFAULT_PATH_FOR_NON_LISTED_NODES",
-                        "paths":["/k8s-volumes"]
+                        "paths":["/opt/k8s-volume"]
                 }
                 ]
         }
