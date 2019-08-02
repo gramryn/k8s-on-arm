@@ -1,18 +1,17 @@
-FROM golang
+FROM alpine:3.9
+MAINTAINER dengnan@google.com vmarmol@google.com vishnuk@google.com jimmidyson@gmail.com stclair@google.com
 
-RUN apt-get update && apt-get install -y git dmsetup && apt-get clean
-RUN git clone https://github.com/google/cadvisor.git /go/src/github.com/google/cadvisor
-RUN cd /go/src/github.com/google/cadvisor && build/build.sh
+RUN apk --no-cache add libc6-compat device-mapper findutils zfs && \
+    apk --no-cache add thin-provisioning-tools --repository http://dl-3.alpinelinux.org/alpine/edge/main/ && \
+    echo 'hosts: files mdns4_minimal [NOTFOUND=return] dns mdns4' >> /etc/nsswitch.conf && \
+    rm -rf /var/cache/apk/*
 
-ENTRYPOINT ["/go/src/github.com/google/cadvisor/cadvisor","-logtostderr"]
-
-#RUN apt-get update && apt-get install -y git dmsetup build-essential golang
-
-#RUN go get github.com/google/cadvisor
-#RUN go get github.com/tools/godep
-#RUN cd /go && godep go build -a github.com/google/cadvisor
-
-#RUN cp ./cadvisor /usr/bin/
+# Grab cadvisor from the staging directory.
+ADD cadvisor /usr/bin/cadvisor
 
 EXPOSE 8080
-#ENTRYPOINT ["/usr/bin/cadvisor", "-logtostderr"]
+
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:8080/healthz || exit 1
+
+ENTRYPOINT ["/usr/bin/cadvisor", "-logtostderr"]

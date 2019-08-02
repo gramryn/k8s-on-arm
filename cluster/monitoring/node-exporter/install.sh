@@ -1,1 +1,1 @@
-helm install --name metric -f values.yaml stable/prometheus-node-exporter
+helm install -f values.yaml stable/prometheus-node-exporter

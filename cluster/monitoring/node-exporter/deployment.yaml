@@ -20,10 +20,10 @@ spec:
       labels:
         k8s-app: node-exporter
         version: v0.18.1
-      annotations:
-        scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:
-      priorityClassName: system-node-critical
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
       containers:
         - name: prometheus-node-exporter
           image: prom/node-exporter-linux-arm64:v0.18.1
@@ -31,6 +31,7 @@ spec:
           args:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys
+            - --collector.textfile.directory=/var/lib/node_exporter
             - --collector.meminfo_numa
           ports:
             - name: metrics
@@ -43,13 +44,9 @@ spec:
             - name: sys
               mountPath: /host/sys
               readOnly: true
-          resources:
-            limits:
-              cpu: 10m
-              memory: 50Mi
-            requests:
-              cpu: 10m
-              memory: 50Mi
+            - name: files
+              mountPath: /var/lib/node_exporter
+              readOnly: true
       hostNetwork: true
       hostPID: true
       volumes:
@@ -59,6 +56,9 @@ spec:
         - name: sys
           hostPath:
             path: /sys
+        - name: files
+          hostPath:
+            path: /var/lib/node_exporter
 ---
 apiVersion: v1
 kind: Service

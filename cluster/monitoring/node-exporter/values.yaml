@@ -1,5 +1,6 @@
 image:
   repository: prom/node-exporter-linux-arm64
+  tag: v0.18.1
 extraArgs: 
   - --collector.textfile.directory=/var/lib/node_exporter
 extraHostVolumeMounts: 

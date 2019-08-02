@@ -1,0 +1,14 @@
+echo "# HELP updates_pending number of pending updates from pacman"
+echo "# TYPE updates_pending gauge"
+echo "node_cpu_temperature 1"
+echo "node_gpu_temperature 2"
+echo "# HELP pacman_updates_pending_from_cache pending updates information are from cache"
+echo "# TYPE pacman_updates_pending_from_cache gauge"
+echo "node_temperature_gpu $cache"
+
+
+
+
+
+node_cpu_temperature 1
+node_gpu_temperature 2

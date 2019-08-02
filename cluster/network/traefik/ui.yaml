@@ -9,7 +9,7 @@ spec:
     k8s-app: traefik-ingress-lb
   ports:
   - name: web
-    port: 80
+    port: 8080
     targetPort: 8080
 ---
 apiVersion: extensions/v1beta1
@@ -23,13 +23,13 @@ metadata:
     external-dns.alpha.kubernetes.io/target: home.proxy.camp
 spec:
   rules:
-  - host: ingress.cluster.camp
+  - host: traefik.cluster.camp
     http:
       paths:
       - path: /
         backend:
           serviceName: traefik-web-ui
-          servicePort: web
+          servicePort: 8080
 
 
 

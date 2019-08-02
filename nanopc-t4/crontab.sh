@@ -1,1 +1,1 @@
-* * * * * /var/lib/node_exporter/cpu-temp.sh
+* * * * * /var/lib/node_exporter/node_temp.sh

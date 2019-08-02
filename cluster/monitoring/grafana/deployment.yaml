@@ -35,8 +35,6 @@ spec:
         env:
         - name: GF_SERVER_HTTP_PORT
           value: "3000"
-        - name: GF_SECURITY_ADMIN_PASSWORD
-          value: "helloworld"
         - name: GF_INSTALL_PLUGINS
           value: "grafana-kubernetes-app"
       volumes:
@@ -47,7 +45,7 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: grafana-service
+  name: grafana
   namespace: kube-system
   annotations:
     prometheus.io/scrape: 'true'
@@ -67,8 +65,8 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/rule-type: "PathPrefixStrip"
-    external-dns.alpha.kubernetes.io/target: home.proxy.camp
-  name: grafana-dashboard
+    external-dns.alpha.kubernetes.io/target: home.cluster.camp
+  name: grafana
   namespace: kube-system
 spec:
   rules:
@@ -77,5 +75,5 @@ spec:
       paths:
       - path: /
         backend:
-          serviceName: grafana-service
+          serviceName: grafana
           servicePort: 3000
