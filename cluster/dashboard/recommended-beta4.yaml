@@ -15,7 +15,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: dashboard
+  name: kubernetes-dashboard
 
 ---
 
@@ -25,7 +25,7 @@ metadata:
   labels:
     k8s-app: kubernetes-dashboard
   name: kubernetes-dashboard
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 
 ---
 
@@ -35,7 +35,7 @@ metadata:
   labels:
     k8s-app: kubernetes-dashboard
   name: kubernetes-dashboard
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 spec:
   ports:
     - port: 443
@@ -51,7 +51,7 @@ metadata:
   labels:
     k8s-app: kubernetes-dashboard
   name: kubernetes-dashboard-certs
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 type: Opaque
 
 ---
@@ -62,7 +62,7 @@ metadata:
   labels:
     k8s-app: kubernetes-dashboard
   name: kubernetes-dashboard-csrf
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 type: Opaque
 data:
   csrf: ""
@@ -75,7 +75,7 @@ metadata:
   labels:
     k8s-app: kubernetes-dashboard
   name: kubernetes-dashboard-key-holder
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 type: Opaque
 
 ---
@@ -86,7 +86,7 @@ metadata:
   labels:
     k8s-app: kubernetes-dashboard
   name: kubernetes-dashboard-settings
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 
 ---
 
@@ -96,7 +96,7 @@ metadata:
   labels:
     k8s-app: kubernetes-dashboard
   name: kubernetes-dashboard
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 rules:
   # Allow Dashboard to get, update and delete Dashboard exclusive secrets.
   - apiGroups: [""]
@@ -140,7 +140,7 @@ metadata:
   labels:
     k8s-app: kubernetes-dashboard
   name: kubernetes-dashboard
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -148,7 +148,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kubernetes-dashboard
-    namespace: dashboard
+    namespace: kubernetes-dashboard
 
 ---
 
@@ -156,7 +156,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: kubernetes-dashboard
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -164,7 +164,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kubernetes-dashboard
-    namespace: dashboard
+    namespace: kubernetes-dashboard
 
 ---
 
@@ -174,7 +174,7 @@ metadata:
   labels:
     k8s-app: kubernetes-dashboard
   name: kubernetes-dashboard
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 spec:
   replicas: 1
   revisionHistoryLimit: 10
@@ -188,14 +188,14 @@ spec:
     spec:
       containers:
         - name: kubernetes-dashboard
-          image: kubernetesui/dashboard:v2.0.0-beta2
+          image: kubernetesui/dashboard:v2.0.0-beta4
           imagePullPolicy: Always
           ports:
             - containerPort: 8443
               protocol: TCP
           args:
             - --auto-generate-certificates
-            - --namespace=dashboard
+            - --namespace=kubernetes-dashboard
             # Uncomment the following line to manually specify Kubernetes API server Host
             # If not specified, Dashboard will attempt to auto discover the API server and connect
             # to it. Uncomment only if the default does not work.
@@ -233,7 +233,7 @@ metadata:
   labels:
     k8s-app: dashboard-metrics-scraper
   name: dashboard-metrics-scraper
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 spec:
   ports:
     - port: 8000
@@ -249,7 +249,7 @@ metadata:
   labels:
     k8s-app: dashboard-metrics-scraper
   name: dashboard-metrics-scraper
-  namespace: dashboard
+  namespace: kubernetes-dashboard
 spec:
   replicas: 1
   revisionHistoryLimit: 10
@@ -263,7 +263,7 @@ spec:
     spec:
       containers:
         - name: dashboard-metrics-scraper
-          image: dockercamp/metrics-scraper:v1.0.0
+          image: kubernetesui/metrics-scraper:v1.0.1
           ports:
             - containerPort: 8000
               protocol: TCP
@@ -274,27 +274,14 @@ spec:
               port: 8000
             initialDelaySeconds: 30
             timeoutSeconds: 30
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
       serviceAccountName: kubernetes-dashboard
       # Comment the following tolerations if Dashboard must not be deployed on master
       tolerations:
         - key: node-role.kubernetes.io/master
           effect: NoSchedule
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  annotations:
-    kubernetes.io/ingress.class: traefik
-    traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip
-    external-dns.alpha.kubernetes.io/target: home.cluster.camp
-  name: kubernetes-dashboard
-  namespace: dashboard
-spec:
-  rules:
-  - host: k8s.cluster.camp
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: kubernetes-dashboard
-          servicePort: 443
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}

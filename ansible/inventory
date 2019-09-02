@@ -2,7 +2,4 @@
 ansible_connection=ssh
 ansible_ssh_user=root
 [nodes]
-192.168.0.10
-192.168.0.11
-192.168.0.12
 192.168.0.13

@@ -132,6 +132,7 @@
           - apt-transport-https
           - ca-certificates
           - curl
+          - gnupg-agent
           - software-properties-common
 
     - name: Add Docker GPG key
