@@ -88,7 +88,9 @@ data:
         metrics_path: '/prometheus'
         static_configs:
           - targets: ['zipkin.springcloud.svc.cluster.local:9411']
-
+      - job_name: 'traefik'
+        static_configs:
+          - targets: ['traefik.kube-system.svc.cluster.local:8080']
       - job_name: 'kubernetes-service-endpoints'
         kubernetes_sd_configs:
         - role: endpoints
