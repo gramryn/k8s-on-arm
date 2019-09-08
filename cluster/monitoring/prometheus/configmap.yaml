@@ -8,9 +8,8 @@ metadata:
 data:
   prometheus.yml: |-
     global:
-      scrape_interval: 10s
-      scrape_timeout: 10s
-      evaluation_interval: 10s
+      scrape_interval: 30s
+      evaluation_interval: 30s
     scrape_configs:
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
@@ -88,9 +87,11 @@ data:
         metrics_path: '/prometheus'
         static_configs:
           - targets: ['zipkin.springcloud.svc.cluster.local:9411']
+          
       - job_name: 'traefik'
         static_configs:
-          - targets: ['traefik.kube-system.svc.cluster.local:8080']
+          - targets: ['traefik.traefik.svc.cluster.local:8080']
+
       - job_name: 'kubernetes-service-endpoints'
         kubernetes_sd_configs:
         - role: endpoints
@@ -119,3 +120,40 @@ data:
         - source_labels: [__meta_kubernetes_service_name]
           action: replace
           target_label: kubernetes_name
+
+      - job_name: consul
+        metrics_path: '/v1/agent/metrics'
+        params:
+          format: ['prometheus']
+        static_configs:
+        - targets: ['consul.consul.svc.cluster.local:8500']
+        # - names: 
+        #   - 'consul-0.consul.consul.svc.cluster.local:8500'
+        #   - 'consul-1.consul.consul.svc.cluster.local:8500'
+        #   - 'consul-2.consul.consul.svc.cluster.local:8500'
+        # consul_sd_configs:
+        #   - server: 'consul-0.consul.consul.svc.cluster.local:8500'
+        #   - server: 'consul-1.consul.consul.svc.cluster.local:8500'
+        #   - server: 'consul-2.consul.consul.svc.cluster.local:8500'
+        relabel_configs:
+          - source_labels: [__meta_consul_tags]
+            regex: .*,monitor,.*
+            action: keep
+          - source_labels: [__meta_consul_service]
+            target_label: service
+          - source_labels: ['__meta_consul_node']
+            target_label: 'node'
+        # consul_sd_configs:
+        #   - server: 'consul.consul.svc.cluster.local:8500'
+        #   # - server: 'consul-1.consul.consul.svc.cluster.local:8500'
+        #   # - server: 'consul-2.consul.consul.svc.cluster.local:8500'
+        # relabel_configs:
+        #   - source_labels: ['__meta_consul_service']
+        #     regex: prometheus\-(.+)
+        #     replacement: '${1}'
+        #     target_label: 'job'
+        #   - source_labels: ['__meta_consul_service']
+        #     regex: consul
+        #     action: drop
+        #   - source_labels: ['__meta_consul_ndoe']
+        #     target_label: 'node'

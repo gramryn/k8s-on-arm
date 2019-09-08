@@ -52,7 +52,8 @@ spec:
       containers:
       - name: external-dns
         # image: lazypower/external-dns:v0.5.12-22-g3d9f2d36-dirty
-        image: dockercamp/external-dns:v0.5.15
+        image: dockercamp/external-dns:v0.5.16-15-gbc36ee90-dirty
+        imagePullPolicy: Always
         volumeMounts:
           - name: google-cloud-key
             mountPath: /var/secrets/google

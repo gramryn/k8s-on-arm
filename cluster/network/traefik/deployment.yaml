@@ -1,46 +1,25 @@
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: traefik-ingress-controller
-  namespace: kube-system
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: traefik-acme
-  namespace: kube-system
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: nvme
-  resources:
-    requests:
-      storage: 100Mi
----
+apiVersion: apps/v1
 kind: Deployment
-apiVersion: extensions/v1beta1
 metadata:
-  name: traefik-ingress-controller
-  namespace: kube-system
+  name: traefik-ingress
+  namespace: traefik
   labels:
-    k8s-app: traefik-ingress-lb
+    k8s-app: traefik-ingress
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
-      k8s-app: traefik-ingress-lb
+      k8s-app: traefik-ingress
   template:
     metadata:
       labels:
-        k8s-app: traefik-ingress-lb
-        name: traefik-ingress-lb
+        k8s-app: traefik-ingress
     spec:
-      serviceAccountName: traefik-ingress-controller
+      serviceAccountName: traefik-ingress
       terminationGracePeriodSeconds: 60
       containers:
-      - image: traefik:v1.7
-        name: traefik-ingress-lb
+      - image: traefik:v1.7.14
+        name: traefik-ingress
         env:
         - name: GCE_PROJECT
           value: clustercamp
@@ -49,8 +28,6 @@ spec:
         volumeMounts:
         - mountPath: /config
           name: config
-        - mountPath: /etc/traefik
-          name: acme
         - mountPath: /secret
           name: google-cloud-key
         ports:
@@ -63,38 +40,38 @@ spec:
         args:
         - --api
         - --kubernetes
+        - --logLevel=INFO
         - --configfile=/config/traefik.toml
       volumes:
         - name: config
           configMap:
-            name: traefik-conf
-        - name: acme
-          persistentVolumeClaim:
-            claimName: traefik-acme
+            name: traefik-config
         - name: google-cloud-key
           secret:
             secretName: cloud-dns-key
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: k8s-app
-                  operator: In
-                  values:
-                  - traefik-ingress-lb
-              topologyKey: kubernetes.io/hostname
+      nodeSelector:
+        consul: server
+      # affinity:
+      #   podAntiAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #     - weight: 100
+      #       podAffinityTerm:
+      #         labelSelector:
+      #           matchExpressions:
+      #           - key: k8s-app
+      #             operator: In
+      #             values:
+      #             - traefik-ingress-lb
+      #         topologyKey: kubernetes.io/hostname
 ---
 kind: Service
 apiVersion: v1
 metadata:
   name: traefik
-  namespace: kube-system
+  namespace: traefik
 spec:
   selector:
-    k8s-app: traefik-ingress-lb
+    k8s-app: traefik-ingress
   ports:
     - protocol: TCP
       port: 80

@@ -33,6 +33,12 @@ spec:
             - --path.sysfs=/host/sys
             - --collector.textfile.directory=/var/lib/node_exporter
             - --collector.meminfo_numa
+            - --collector.systemd
+            - --collector.tcpstat
+            - --collector.ntp
+            - --collector.interrupts  
+            - --collector.hwmon
+            - --collector.processes
           ports:
             - name: metrics
               containerPort: 9100

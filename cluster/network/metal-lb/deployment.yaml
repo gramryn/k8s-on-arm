@@ -189,7 +189,7 @@ spec:
       hostNetwork: true
       containers:
       - name: speaker
-        image: metallb/speaker:master
+        image: metallb/speaker:master-arm64
         imagePullPolicy: Always
         args:
         - --port=7472
@@ -253,7 +253,7 @@ spec:
         "beta.kubernetes.io/os": linux
       containers:
       - name: controller
-        image: metallb/controller:master
+        image: metallb/controller:master-arm64
         imagePullPolicy: Always
         args:
         - --port=7472
