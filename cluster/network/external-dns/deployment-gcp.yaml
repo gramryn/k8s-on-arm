@@ -4,7 +4,7 @@ metadata:
   name: external-dns
   namespace: kube-system
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: external-dns
@@ -22,7 +22,7 @@ rules:
   resources: ["nodes"]
   verbs: ["list"]
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: external-dns-viewer
@@ -35,12 +35,15 @@ subjects:
   name: external-dns
   namespace: kube-system
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: external-dns
   namespace: kube-system
 spec:
+  selector:
+    matchLabels:
+      app: external-dns
   strategy:
     type: Recreate
   template:
@@ -51,7 +54,6 @@ spec:
       serviceAccountName: external-dns
       containers:
       - name: external-dns
-        # image: lazypower/external-dns:v0.5.12-22-g3d9f2d36-dirty
         image: dockercamp/external-dns:v0.5.16-15-gbc36ee90-dirty
         imagePullPolicy: Always
         volumeMounts:

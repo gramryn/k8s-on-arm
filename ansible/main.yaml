@@ -14,63 +14,40 @@
     default_language: ko_KR
     timezone: Asia/Seoul
     ansible_python_interpreter: /usr/bin/python3
-    kubernetes_version: "1.15.0-00"
+    kubernetes_version: "1.16.0-00"
   pre_tasks:
     - name: Gathering Facts
       setup:
 
-  # tasks:
-  #   - name: Install additional packages
-  #     apt:
-  #       name: "{{ packages }}"
-  #       update_cache: yes
-  #     vars:
-  #       packages:
-  #         - dbus
-  #         - bc
-  #         - hdparm
-  #         - ack
-  #         - telnet
-  #         - iotop
-  #         - sysstat
-  #         - nfs-common
-  #         - git
-  #         - less
-  #         - vim
-  #         - build-essential
-  #         - iptables
-  #         - ipset
-  #         - pciutils
-  #         - lshw
-  #         - iperf3
-  #         - net-tools
-  #         - jq
-  #         - language-pack-ko
-  #         - language-pack-ko-base
+  tasks:
+    - name: Install additional packages
+      apt:
+        name: "{{ packages }}"
+        update_cache: yes
+      vars:
+        packages:
+          - dbus
+          - bc
+          - hdparm
+          - ack
+          - telnet
+          - iotop
+          - sysstat
+          - nfs-common
+          - git
+          - less
+          - vim
+          - build-essential
+          - iptables
+          - ipset
+          - pciutils
+          - lshw
+          - iperf3
+          - net-tools
+          - jq
+          - language-pack-ko
+          - language-pack-ko-base
           
-    # - name: select locales to be generated
-    #   locale_gen:
-    #     name: "{{ item }}"
-    #     state: present
-    #   loop: "{{ locales_generated }}"
-    #   notify: reconfigure locales
-
-    # - name: Configuration Default locale
-    #   copy:
-    #     dest: "/etc/default/locale"
-    #     content: |
-    #       LANG={{ default_locale }}
-    #       LANGUAGE={{ default_language }}
-    #       LC_ALL={{ default_locale }}
-    #   notify: reconfigure locales
-
-    # - name: Setting localtime
-    #   file: src=/usr/share/zoneinfo/{{ timezone }} dest=/etc/localtime state=link
-      
-    # - name: Setting Time Zone
-    #   timezone: name={{ timezone }}
-    #   notify: update tzdata
-
     - name: Stop and disable unused services
       systemd:
           name: "{{ item }}"
@@ -132,7 +109,6 @@
           - apt-transport-https
           - ca-certificates
           - curl
-          - gnupg-agent
           - software-properties-common
 
     - name: Add Docker GPG key
@@ -140,7 +116,7 @@
 
     - name: Add Docker APT repository
       apt_repository:
-        repo: "deb [arch=arm64] https://download.docker.com/linux/ubuntu {{ansible_distribution_release}} stable"
+        repo: "deb [arch=arm64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
     - name: Install Docker
       apt:

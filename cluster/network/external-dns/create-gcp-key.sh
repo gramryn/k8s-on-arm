@@ -1,1 +1,1 @@
-kubectl create secret generic cloud-dns-key -n kube-system --from-file=key.json=$HOME/Developments/HomeProject/clouds-secrets/clustercamp-dynamic-dns.json
+kubectl create secret generic cloud-dns-key -n kube-system --from-file=key.json=$HOME/Development/Home/clouds-secrets/clustercamp-dynamic-dns.json

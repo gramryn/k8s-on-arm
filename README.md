@@ -1,36 +1,90 @@
 # kubernetes-arm64
 
-Install k3s cluster on nanopi t4
+Install kubernetes on sbc
 
-## Operating System
+## Work on linux 
 
-### Initial Node Network
+### Change Machine Id
+rm -f /etc/machine-id && rm /var/lib/dbus/machine-id && dbus-uuidgen --ensure=/etc/machine-id
+
+### Change MAC
+https://www.miniwebtool.com/mac-address-generator/
+ifconfig eth0 down
+ifconfig eth0 hw ether [mac]
+ifconfig eth0 up
+
+## All Node
+
+### Docker 
 
 ```bash
-$ sudo cp network/99-wlan /etc/NetworkManager/dispatcher.d/
-$ mkdir -p /var/k3s
-$ sudo cp network/resolv.conf /var/k3s/
+apt-get update && apt-get install apt-transport-https ca-certificates curl software-properties-common
+
+### Add Docker’s official GPG key
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+
+### Add Docker apt repository.
+add-apt-repository \
+  "deb [arch=arm64] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) \
+  stable"
+
+## Install Docker CE.
+apt-get update && apt-get install docker-ce
+
+# Setup daemon.
+cat > /etc/docker/daemon.json <<EOF
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+
+mkdir -p /etc/systemd/system/docker.service.d
+
+# Restart docker.
+systemctl daemon-reload
+systemctl restart docker
 ```
+
+### Kube Component
+
+```bash
+apt-get update && apt-get install -y apt-transport-https curl
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+apt-get update
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
+```
+
+* /var/lib/kubelet/kubeadm-flags.env
+remove cni option 
+
+systemctl daemon-reload
+systemctl restart kubelet
 
 ## Setup Kubernetes Cluster
 
 ### Install Master
 
 ```bash
-$ curl -sfL https://get.k3s.io | K3S_NAME=amazon sh -
+# kubeadm config images pull
+# kubeadm init --pod-network-cidr=10.244.0.0/16 
+# mkdir -p $HOME/.kube
+# cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+# chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 ### Install Node
 
-- Get Token on Master
 
-```bash
-$ sudo cat /var/lib/rancher/k3s/server/node-token
-```
-
-```bash
-$ curl -sfL https://get.k3s.io | K3S_URL=https://192.168.0.10:6443 K3S_TOKEN=<<token>> sh -
-```
 
 ### Install Dashboard
 
