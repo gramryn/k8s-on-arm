@@ -241,6 +241,19 @@ spec:
       - effect: NoSchedule
         key: node-role.kubernetes.io/master
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: metallb-system
+  name: config
+data:
+  config: |
+    address-pools:
+    - name: default
+      protocol: layer2
+      addresses:
+      - 192.168.1.0/24
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:

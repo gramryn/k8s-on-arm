@@ -9,7 +9,7 @@ metadata:
 apiVersion: v1
 kind: Service
 metadata:
-  name: consul-cluster
+  name: consul
   namespace: consul
   labels:
     app: consul

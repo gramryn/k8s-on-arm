@@ -1,7 +1,7 @@
 #!/bin/bash
 kubeadm config images pull
-# for flannel
-kubeadm init --pod-network-cidr=10.244.0.0/16 
+# for flannel with IPVS
+kubeadm init --pod-network-cidr=10.244.0.0/16 --feature-gates=SupportIPVSProxyMode=true
 
 --apiserver-cert-extra-sans=k8s.cluster.camp
 

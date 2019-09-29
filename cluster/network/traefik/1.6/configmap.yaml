@@ -32,7 +32,7 @@ data:
     entryPoint = "http"
 
     [consul]
-    endpoint = "consul-cluster.consul.svc.cluster.local:8500"
+    endpoint = "consul.consul.svc.cluster.local:8500"
     watch = true
     prefix = "traefik"
 
