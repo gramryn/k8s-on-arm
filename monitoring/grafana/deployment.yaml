@@ -1,0 +1,80 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nvme
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: grafana
+  template:
+    metadata:
+      labels:
+        k8s-app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:6.3.6
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /var/lib/grafana
+          name: grafana-storage
+        env:
+        - name: GF_SERVER_HTTP_PORT
+          value: "3000"
+      volumes:
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: grafana
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: grafana
+  namespace: monitoring
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port:   '3000'
+spec:
+  selector:
+    k8s-app: grafana
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/rule-type: "PathPrefixStrip"
+    external-dns.alpha.kubernetes.io/target: home.cluster.camp
+  name: grafana
+  namespace: monitoring
+spec:
+  rules:
+  - host: grafana.cluster.camp
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: grafana
+          servicePort: 3000

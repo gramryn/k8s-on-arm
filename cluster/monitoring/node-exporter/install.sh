@@ -1,1 +1,0 @@
-helm install -f values.yaml stable/prometheus-node-exporter

@@ -1,0 +1,93 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: traefik-ingress-role
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - endpoints
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik-ingress
+  namespace: network
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: traefik-ingress-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: traefik-ingress-role
+subjects:
+- kind: ServiceAccount
+  name: traefik-ingress
+  namespace: network
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-config
+  namespace: network
+data:
+  traefik.toml: |
+    defaultEntryPoints = ["http", "https"]
+    debug = true
+    logLevel = "INFO"
+    InsecureSkipVerify = true
+
+    [entryPoints]
+      [entryPoints.http]
+      address = ":80"
+      compress = true
+        
+      [entryPoints.https]
+      address = ":443"
+        [entryPoints.https.tls]
+
+    [kubernetes]
+    watch=true
+
+    [accessLog]
+    [metrics]
+      [metrics.prometheus]
+      buckets=[0.1,0.3,1.2,5.0]
+      entryPoint = "traefik"
+
+    [ping]
+    entryPoint = "http"
+
+    [consul]
+    endpoint = "consul.network.svc.cluster.local:8500"
+    watch = true
+    prefix = "traefik"
+
+    [acme]
+    email = "clustercamp@gmail.com"
+    storage = "traefik/acme/account"
+    onDemand=true
+    onHostRule=true
+    acmeLogging = true
+    overrideCertificates = true
+    entryPoint = "https"
+
+      [acme.dnsChallenge]
+      provider = "gcloud"
+  

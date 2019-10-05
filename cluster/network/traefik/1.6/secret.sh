@@ -1,1 +1,0 @@
-kubectl create secret generic cloud-dns-key -n traefik --from-file=key.json=$HOME/Development/Home/clouds-secrets/clustercamp-dynamic-dns.json
